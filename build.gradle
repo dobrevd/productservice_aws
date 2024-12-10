@@ -40,13 +40,14 @@ dependencies {
 	testImplementation 'org.mockito:mockito-inline:5.2.0'
 	testImplementation 'org.mockito:mockito-core:5.14.2'
 
+	implementation 'com.amazonaws:aws-xray-recorder-sdk-spring:2.18.2'
+	implementation 'com.amazonaws:aws-xray-recorder-sdk-aws-sdk:2.18.2'
+
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
-
-
 
 configurations.configureEach {
 	exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'

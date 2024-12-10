@@ -1,5 +1,6 @@
 package com.dobrev.productservice.products.controller;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.dobrev.productservice.products.dto.ProductDto;
 import com.dobrev.productservice.products.model.Product;
 import com.dobrev.productservice.products.service.ProductService;
@@ -21,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 @Slf4j
+@XRayEnabled
 public class ProductsController {
     private final ProductService productService;
 

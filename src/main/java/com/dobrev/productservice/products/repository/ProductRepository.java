@@ -1,5 +1,6 @@
 package com.dobrev.productservice.products.repository;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.dobrev.productservice.products.model.Product;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
+@XRayEnabled
 public class ProductRepository {
 // TODO   @Value("${products.page_size}")
     private Integer pageSize = 100;

@@ -9,7 +9,7 @@ public record ProductDto(
          String productName,
          String code,
          float price,
-         String model
-//         @JsonInclude(JsonInclude.Include.NON_NULL)
-//         String url
+         String model,
+         @JsonInclude(JsonInclude.Include.NON_NULL)
+         String url
 ) {}
