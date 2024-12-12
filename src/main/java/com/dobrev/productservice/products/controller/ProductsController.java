@@ -6,6 +6,7 @@ import com.dobrev.productservice.products.model.Product;
 import com.dobrev.productservice.products.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.ThreadContext;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,11 +35,13 @@ public class ProductsController {
 
     @GetMapping("/{id}")
     public CompletableFuture<ProductDto> getProductById(@PathVariable("id") String productId){
+        log.info("Get product by it's id: {}", productId);
         return productService.getProductById(productId);
     }
 
     @PostMapping
     public CompletableFuture<ProductDto> creteProduct(@RequestBody ProductDto productDto){
+        log.info("");
         return productService.createProduct(productDto);
     }
 

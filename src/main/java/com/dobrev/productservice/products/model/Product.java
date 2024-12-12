@@ -23,7 +23,7 @@ public class Product {
     private String url;
 
     @DynamoDbPartitionKey
-    public String getId(String id) {
+    public String getId() {
         return id;
     }
 }

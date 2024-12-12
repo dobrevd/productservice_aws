@@ -2,6 +2,7 @@ package com.dobrev.productservice.products.repository;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.dobrev.productservice.products.model.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Repository
 @XRayEnabled
+@Slf4j
 public class ProductRepository {
 // TODO   @Value("${products.page_size}")
     private Integer pageSize = 100;
@@ -37,6 +39,7 @@ public class ProductRepository {
     }
 
     public CompletableFuture<Product> getById(String productId){
+        log.info("Product id: {}", productId);
         return productsTable.getItem(Key.builder()
                         .partitionValue(productId)
                 .build());
