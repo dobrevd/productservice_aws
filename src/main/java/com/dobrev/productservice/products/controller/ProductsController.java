@@ -28,7 +28,7 @@ public class ProductsController {
     private final ProductService productService;
 
     @GetMapping
-    public List<Product> getAllProducts(){
+    public CompletableFuture<List<Product>> getAllProducts(){
         log.info("Get all products.");
         return productService.getAllProducts();
     }

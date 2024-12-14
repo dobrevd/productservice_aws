@@ -11,5 +11,5 @@ public record ProductDto(
          float price,
          String model,
          @JsonInclude(JsonInclude.Include.NON_NULL)
-         String url
+         String productUrl
 ) {}

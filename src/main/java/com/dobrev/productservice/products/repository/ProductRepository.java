@@ -20,8 +20,8 @@ import java.util.concurrent.CompletableFuture;
 @XRayEnabled
 @Slf4j
 public class ProductRepository {
-// TODO   @Value("${products.page_size}")
-    private Integer pageSize = 100;
+    @Value("${products.page_size}")
+    private Integer pageSize;
 
     private final DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     private final DynamoDbAsyncTable<Product> productsTable;

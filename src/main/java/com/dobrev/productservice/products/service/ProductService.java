@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -21,14 +22,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
-    public List<Product> getAllProducts() {
-        List<Product> products = new ArrayList<>();
+    public CompletableFuture<List<Product>> getAllProducts() {
+        List<Product> products = new CopyOnWriteArrayList<>();
+        CompletableFuture<List<Product>> future = new CompletableFuture<>();
 
         productRepository.getAll()
-                .items()
-                .subscribe(products::add)
-                .join();
-        return products;
+                .subscribe(page -> products.addAll(page.items()));
+
+        return future;
     }
 
     public CompletableFuture<ProductDto> getProductById(String productId) {

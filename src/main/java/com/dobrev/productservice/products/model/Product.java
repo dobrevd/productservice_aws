@@ -20,7 +20,7 @@ public class Product {
     private String code;
     private float price;
     private String model;
-    private String url;
+    private String productUrl;
 
     @DynamoDbPartitionKey
     public String getId() {
