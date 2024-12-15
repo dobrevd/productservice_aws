@@ -1,6 +1,8 @@
 package com.dobrev.productservice.products.service;
 
 import com.dobrev.productservice.products.dto.ProductDto;
+import com.dobrev.productservice.products.exceptions.ProductError;
+import com.dobrev.productservice.products.exceptions.ProductException;
 import com.dobrev.productservice.products.mapper.ProductMapper;
 import com.dobrev.productservice.products.model.Product;
 import com.dobrev.productservice.products.repository.ProductRepository;
@@ -8,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,7 +28,6 @@ public class ProductService {
 
         productRepository.getAll()
                 .subscribe(page -> products.addAll(page.items()));
-
         return future;
     }
 
@@ -37,7 +36,7 @@ public class ProductService {
                 .thenApply(productMapper::toDto)
                 .exceptionally(ex -> {
                     log.error("Error fetching product with ID: {}", productId, ex);
-                    throw new NoSuchElementException(ex);
+                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
                 });
     }
 
@@ -59,8 +58,7 @@ public class ProductService {
                     return productMapper.toDto(product);
                 })
                 .exceptionally(ex -> {
-                    log.error("Error deleting product with ID: {}", productId, ex);
-                    throw new NoSuchElementException(ex);
+                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
                 });
     }
 
@@ -73,8 +71,7 @@ public class ProductService {
                     return productMapper.toDto(product);
                 })
                 .exceptionally(ex -> {
-                    log.error("Error updating product with ID: {}", productId, ex);
-                    throw new NoSuchElementException(ex);
+                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
                 });
     }
 }
