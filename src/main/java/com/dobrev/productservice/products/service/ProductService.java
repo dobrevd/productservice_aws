@@ -33,10 +33,16 @@ public class ProductService {
 
     public CompletableFuture<ProductDto> getProductById(String productId) {
         return productRepository.getById(productId)
-                .thenApply(productMapper::toDto)
+                .thenApply(product -> {
+                    if (product == null){
+                        log.error("Product does not exist with id: {}", productId);
+                        throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    }
+                    return productMapper.toDto(product);
+                })
                 .exceptionally(ex -> {
-                    log.error("Error fetching product with ID: {}", productId, ex);
-                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    log.error("Error fetching product with code: {}", productId, ex);
+                    throw new RuntimeException(ex);
                 });
     }
 
@@ -44,34 +50,75 @@ public class ProductService {
         var product = productMapper.toModel(productDto);
         product.setId(UUID.randomUUID().toString());
 
-        return productRepository.create(product)
-                .thenApply(voidResult -> {
-                    log.info("Product is created with id: {}", product.getId());
-                    return productMapper.toDto(product);
+        var productCode = product.getCode();
+
+        return productRepository.checkIfCodeExists(productCode)
+                .thenCompose(existingProduct -> {
+                    if (existingProduct != null) {
+                        log.error("Product already exists with code: {}", productCode);
+                        throw new ProductException(ProductError.PRODUCT_CODE_ALREADY_EXISTS, productCode);
+                    }
+                    return productRepository.create(product)
+                            .thenApply(voidResult -> {
+                                log.info("Product is created with id: {}", product.getId());
+                                return productMapper.toDto(product);
+                            });
+                })
+                .exceptionally(ex -> {
+                    log.error("Error creating product: {}", productDto, ex);
+                    throw new RuntimeException(ex);
                 });
     }
 
     public CompletableFuture<ProductDto> deleteProductById(String productId) {
         return productRepository.deleteById(productId)
                 .thenApply(product -> {
+                    if(product == null){
+                        log.error("Product with id:{} can not be deleted. It does not exist", productId);
+                        throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    }
                     log.info("Product is deleted with id: {}", product.getId());
                     return productMapper.toDto(product);
                 })
                 .exceptionally(ex -> {
-                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    log.error("Error deleting product with id: {}", productId);
+                    throw new RuntimeException(ex);
                 });
     }
 
     public CompletableFuture<ProductDto> updateProduct(ProductDto productDto, String productId) {
         var product = productMapper.toModel(productDto);
+        var productCode = product.getCode();
 
-        return productRepository.update(product, productId)
-                .thenApply(voidResult -> {
-                    log.info("Product is updated with id: {}", product.getId());
+        return productRepository.checkIfCodeExists(productCode)
+                .thenCompose(existingProduct -> {
+                    if (existingProduct != null && !existingProduct.getId().equals(productDto.id())) {
+                        log.error("Can not update product with code: {}. Product already exists", productCode);
+                        throw new ProductException(ProductError.PRODUCT_CODE_ALREADY_EXISTS, productCode);
+                    }
+                    return productRepository.update(product, productId)
+                            .thenApply(voidResult -> {
+                                log.info("Product is updated with id: {}", product.getId());
+                                return productMapper.toDto(product);
+                            });
+                })
+                .exceptionally(ex -> {
+                    log.error("Error updating product: {}", productDto, ex);
+                    throw new RuntimeException(ex);
+                });
+    }
+
+    public CompletableFuture<ProductDto> getByCode(String code) {
+        return productRepository.getByCode(code)
+                .thenApply(product -> {
+                    if (product == null) {
+                        throw new ProductException(ProductError.PRODUCT_NOT_FOUND, code);
+                    }
                     return productMapper.toDto(product);
                 })
                 .exceptionally(ex -> {
-                    throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    log.error("Error fetching product with code: {}", code, ex);
+                    throw new RuntimeException(ex);
                 });
     }
 }

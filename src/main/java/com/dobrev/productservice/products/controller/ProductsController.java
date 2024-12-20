@@ -2,7 +2,6 @@ package com.dobrev.productservice.products.controller;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.dobrev.productservice.products.dto.ProductDto;
-import com.dobrev.productservice.products.model.Product;
 import com.dobrev.productservice.products.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -27,7 +26,11 @@ public class ProductsController {
     private final ProductService productService;
 
     @GetMapping
-    public CompletableFuture<List<Product>> getAllProducts(){
+    public CompletableFuture<?> getAllProducts(@RequestParam(required = false) String code){
+        if (code != null){
+            log.info("Get product by code {}", code);
+            return productService.getByCode(code);
+        }
         log.info("Get all products.");
         return productService.getAllProducts();
     }

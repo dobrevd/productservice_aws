@@ -11,9 +11,13 @@ import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
@@ -32,6 +36,26 @@ public class ProductRepository {
         this.productsTable = dynamoDbEnhancedAsyncClient.table(productsDdbName, TableSchema.fromBean(Product.class));
     }
 
+    public CompletableFuture<Product> getByCode(String code){
+        return checkIfCodeExists(code)
+                .thenCompose(product ->
+                        product != null ? getById(product.getId()) : CompletableFuture.completedFuture(null));
+    }
+
+    public CompletableFuture<Product> checkIfCodeExists(String code){
+        List<Product> products = new ArrayList<>();
+
+        var request = QueryEnhancedRequest.builder()
+                .limit(1)
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(code).build()))
+                .build();
+        productsTable.index("codeIdx")
+                .query(request)
+                .subscribe(productPage -> products.addAll(productPage.items()));
+
+        return CompletableFuture.supplyAsync(() -> products.stream().findFirst().orElse(null));
+    }
+
     public PagePublisher<Product> getAll(){
         return productsTable.scan(ScanEnhancedRequest.builder()
                 .limit(pageSize)
@@ -46,6 +70,9 @@ public class ProductRepository {
     }
 
     public CompletableFuture<Void> create(Product product){
+
+
+
         return productsTable.putItem(product);
     }
 
