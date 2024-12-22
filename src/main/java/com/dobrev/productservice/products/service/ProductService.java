@@ -1,6 +1,9 @@
 package com.dobrev.productservice.products.service;
 
 import com.dobrev.productservice.products.dto.ProductDto;
+import com.dobrev.productservice.products.events.dto.EventType;
+import com.dobrev.productservice.products.events.dto.ProductEventDto;
+import com.dobrev.productservice.products.events.service.EventsPublisher;
 import com.dobrev.productservice.products.exceptions.ProductError;
 import com.dobrev.productservice.products.exceptions.ProductException;
 import com.dobrev.productservice.products.mapper.ProductMapper;
@@ -8,7 +11,9 @@ import com.dobrev.productservice.products.model.Product;
 import com.dobrev.productservice.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.ThreadContext;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final EventsPublisher eventsPublisher;
 
     public CompletableFuture<List<Product>> getAllProducts() {
         List<Product> products = new CopyOnWriteArrayList<>();
@@ -60,6 +66,8 @@ public class ProductService {
                     }
                     return productRepository.create(product)
                             .thenApply(voidResult -> {
+                                publishEvent(productMapper.toProductEvent(product),EventType.PRODUCT_CREATED, "created@email");
+
                                 log.info("Product is created with id: {}", product.getId());
                                 return productMapper.toDto(product);
                             });
@@ -77,6 +85,8 @@ public class ProductService {
                         log.error("Product with id:{} can not be deleted. It does not exist", productId);
                         throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
                     }
+                    publishEvent(productMapper.toProductEvent(product), EventType.PRODUCT_DELETED, "detele@email");
+
                     log.info("Product is deleted with id: {}", product.getId());
                     return productMapper.toDto(product);
                 })
@@ -98,6 +108,9 @@ public class ProductService {
                     }
                     return productRepository.update(product, productId)
                             .thenApply(voidResult -> {
+                                publishEvent(productMapper.toProductEvent(product),
+                                        EventType.PRODUCT_UPDATED,
+                                        "update@email");
                                 log.info("Product is updated with id: {}", product.getId());
                                 return productMapper.toDto(product);
                             });
@@ -120,5 +133,13 @@ public class ProductService {
                     log.error("Error fetching product with code: {}", code, ex);
                     throw new RuntimeException(ex);
                 });
+    }
+
+    private void publishEvent(ProductEventDto productEventDto, EventType eventType, String email){
+        CompletableFuture<PublishResponse> publishEvent = eventsPublisher.sendProductEvents(
+                productEventDto, eventType, email);
+
+        publishEvent.thenAccept(publishResponse ->
+                ThreadContext.put("messageId", publishResponse.messageId()));
     }
 }
