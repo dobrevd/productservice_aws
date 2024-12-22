@@ -43,7 +43,7 @@ public class ProductsController {
 
     @PostMapping
     public CompletableFuture<ProductDto> creteProduct(@RequestBody ProductDto productDto){
-        log.info("");
+        log.info("Product is created");
         return productService.createProduct(productDto);
     }
 

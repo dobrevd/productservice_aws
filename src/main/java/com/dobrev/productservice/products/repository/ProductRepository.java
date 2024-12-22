@@ -70,9 +70,6 @@ public class ProductRepository {
     }
 
     public CompletableFuture<Void> create(Product product){
-
-
-
         return productsTable.putItem(product);
     }
 
