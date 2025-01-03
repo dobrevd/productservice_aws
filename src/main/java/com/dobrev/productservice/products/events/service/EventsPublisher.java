@@ -1,7 +1,6 @@
 package com.dobrev.productservice.products.events.service;
 
 import com.amazonaws.xray.AWSXRay;
-import com.dobrev.productservice.products.dto.ProductDto;
 import com.dobrev.productservice.products.events.dto.EventType;
 import com.dobrev.productservice.products.events.dto.ProductEventDto;
 import com.dobrev.productservice.products.events.dto.ProductFailureEventDto;

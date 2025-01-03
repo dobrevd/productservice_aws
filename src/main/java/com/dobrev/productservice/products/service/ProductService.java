@@ -28,13 +28,14 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final EventsPublisher eventsPublisher;
 
-    public CompletableFuture<List<Product>> getAllProducts() {
+    public List<Product> getAllProducts() {
         List<Product> products = new CopyOnWriteArrayList<>();
-        CompletableFuture<List<Product>> future = new CompletableFuture<>();
 
         productRepository.getAll()
-                .subscribe(page -> products.addAll(page.items()));
-        return future;
+                .items()
+                .subscribe(products::add)
+                .join();
+        return products;
     }
 
     public CompletableFuture<ProductDto> getProductById(String productId) {
@@ -78,24 +79,6 @@ public class ProductService {
                 });
     }
 
-    public CompletableFuture<ProductDto> deleteProductById(String productId) {
-        return productRepository.deleteById(productId)
-                .thenApply(product -> {
-                    if(product == null){
-                        log.error("Product with id:{} can not be deleted. It does not exist", productId);
-                        throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
-                    }
-                    publishEvent(productMapper.toProductEvent(product), EventType.PRODUCT_DELETED, "detele@email");
-
-                    log.info("Product is deleted with id: {}", product.getId());
-                    return productMapper.toDto(product);
-                })
-                .exceptionally(ex -> {
-                    log.error("Error deleting product with id: {}", productId);
-                    throw new RuntimeException(ex);
-                });
-    }
-
     public CompletableFuture<ProductDto> updateProduct(ProductDto productDto, String productId) {
         var product = productMapper.toModel(productDto);
         var productCode = product.getCode();
@@ -135,11 +118,26 @@ public class ProductService {
                 });
     }
 
-    private void publishEvent(ProductEventDto productEventDto, EventType eventType, String email){
-        CompletableFuture<PublishResponse> publishEvent = eventsPublisher.sendProductEvents(
-                productEventDto, eventType, email);
+    public CompletableFuture<ProductDto> deleteProductById(String productId) {
+        return productRepository.deleteById(productId)
+                .thenApply(product -> {
+                    if(product == null){
+                        log.error("Product with id:{} can not be deleted. It does not exist", productId);
+                        throw new ProductException(ProductError.PRODUCT_NOT_FOUND, productId);
+                    }
+//                    publishEvent(productMapper.toProductEvent(product), EventType.PRODUCT_DELETED, "detele@email");
 
-        publishEvent.thenAccept(publishResponse ->
-                ThreadContext.put("messageId", publishResponse.messageId()));
+                    log.info("Product is deleted with id: {}", product.getId());
+                    return productMapper.toDto(product);
+                })
+                .exceptionally(ex -> {
+                    log.error("Error deleting product with id: {}", productId);
+                    throw new RuntimeException(ex);
+                });
+    }
+
+    private void publishEvent(ProductEventDto productEventDto, EventType eventType, String email){
+        var publishResponse = eventsPublisher.sendProductEvents(productEventDto, eventType, email).join();
+        ThreadContext.put("messageId", publishResponse.messageId());
     }
 }

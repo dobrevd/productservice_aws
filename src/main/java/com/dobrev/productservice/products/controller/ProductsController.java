@@ -26,7 +26,7 @@ public class ProductsController {
     private final ProductService productService;
 
     @GetMapping
-    public CompletableFuture<?> getAllProducts(@RequestParam(required = false) String code){
+    public Object getAllProducts(@RequestParam(required = false) String code){
         if (code != null){
             log.info("Get product by code {}", code);
             return productService.getByCode(code);
