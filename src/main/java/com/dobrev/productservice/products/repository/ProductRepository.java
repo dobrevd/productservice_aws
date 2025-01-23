@@ -1,6 +1,8 @@
 package com.dobrev.productservice.products.repository;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import com.dobrev.productservice.products.exceptions.ProductError;
+import com.dobrev.productservice.products.exceptions.ProductException;
 import com.dobrev.productservice.products.model.Product;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,6 +72,11 @@ public class ProductRepository {
     }
 
     public CompletableFuture<Void> create(Product product){
+        var productWithTheSameCode = checkIfCodeExists(product.getCode()).join();
+        if (productWithTheSameCode != null){
+            log.error("Can not create a product with same code");
+            throw new ProductException(ProductError.PRODUCT_CODE_ALREADY_EXISTS, productWithTheSameCode.getId());
+        }
         return productsTable.putItem(product);
     }
 
